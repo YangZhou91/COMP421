@@ -1,4 +1,5 @@
-package ui;
+package server;
+
 
 import java.util.Date;
 

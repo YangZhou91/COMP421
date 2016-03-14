@@ -1,2 +1,6 @@
 /ui/
 /SqlConnectionDummy.class
+/ISqlConnection.class
+/Book.class
+/CreditCard.class
+/server/

@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
@@ -14,6 +15,11 @@ import swing2swt.layout.BoxLayout;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+
+import server.Book;
+import server.CreditCard;
+import server.ISqlConnection;
+
 import org.eclipse.swt.widgets.DateTime;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Label;
@@ -22,13 +28,16 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormAttachment;
 
 public class MainWindow {
 	
 	// CHANGE
-	private SqlConnectionDummy sql;
+	private ISqlConnection sql;
 	
-	protected Shell shell;
+	protected Shell shlBookstoreApplication;
 	private Text txtIsbn;
 	private Text txtAuthors;
 	private Text txtPublisher;
@@ -49,6 +58,19 @@ public class MainWindow {
 	private Text txtUserEmail;
 	private Label labelEditCardResult;
 	private Label labelAddBookResult;
+	private Text txtStartDate;
+	private Text txtNumberOfPoints;
+	private Text txtAmountToIncrease;
+	private Text txtCategory;
+	private Text txtAmountToIncreasePub;
+	private Text txtPublisherIncrease;
+	private Group grpIncreaseBookPrice;
+	private Group grpGiftCardPromotion;
+	private Label labelIncreasePub;
+	private Label labelCategoryPrice;
+	private Label labelRewardPoints;
+	private Label labelGiftCardAmount;
+	private Label labelFindPurchases;
 
 	/**
 	 * Launch the application.
@@ -68,14 +90,13 @@ public class MainWindow {
 	 */
 	public void open() {
 		
-		// CHANGE
-		sql = new SqlConnectionDummy();
+		// Instantiate ISqlConnection
 		
 		Display display = Display.getDefault();
 		createContents();
-		shell.open();
-		shell.layout();
-		while (!shell.isDisposed()) {
+		shlBookstoreApplication.open();
+		shlBookstoreApplication.layout();
+		while (!shlBookstoreApplication.isDisposed()) {
 			if (!display.readAndDispatch()) {
 				display.sleep();
 			}
@@ -86,51 +107,288 @@ public class MainWindow {
 	 * Create contents of the window.
 	 */
 	protected void createContents() {
-		shell = new Shell();
-		shell.setSize(891, 468);
-		shell.setText("SWT Application");
-		shell.setLayout(new FillLayout(SWT.HORIZONTAL));
+		shlBookstoreApplication = new Shell();
+		shlBookstoreApplication.setSize(1106, 468);
+		shlBookstoreApplication.setText("Bookstore Application");
+		shlBookstoreApplication.setLayout(new FillLayout(SWT.HORIZONTAL));
 		
-		Group grpGiftCardPromotion = new Group(shell, SWT.NONE);
+		createFindPurchases();
+		
+		grpGiftCardPromotion = new Group(shlBookstoreApplication, SWT.NONE);
 		grpGiftCardPromotion.setText("Gift Card Promotion");
 		
-		Group grpFindTotalAmount = new Group(grpGiftCardPromotion, SWT.NONE);
-		grpFindTotalAmount.setText("Find Total Amount Spent");
-		grpFindTotalAmount.setBounds(10, 21, 155, 186);
+		createFindTotalAmount();
+		createRewardBonusPoints();
 		
-		Group grpRewardBonusPoints = new Group(grpGiftCardPromotion, SWT.NONE);
-		grpRewardBonusPoints.setText("Reward Bonus Points");
-		grpRewardBonusPoints.setBounds(10, 213, 155, 206);
-		
-		Group grpIncreaseBookPrice = new Group(shell, SWT.NONE);
+		grpIncreaseBookPrice = new Group(shlBookstoreApplication, SWT.NONE);
 		grpIncreaseBookPrice.setText("Increase Book Price");
 		
+		createIncreaseByCategory();
+		createIncreaseByPublisher();
+		
+		createEditCreditCard();
+		
+		createAddBook();
+
+	}
+	
+	private void createFindPurchases() {
+		
+		Group grpFindPurchases = new Group(shlBookstoreApplication, SWT.NONE);
+		grpFindPurchases.setText("Find Purchases");
+		grpFindPurchases.setLayout(new FillLayout(SWT.VERTICAL));
+		
+
+		labelFindPurchases = new Label(grpFindPurchases, SWT.NONE);
+		txtStartDate = new Text(grpFindPurchases, SWT.BORDER);
+		txtStartDate.setToolTipText("Date must be dd/MM/yyy");
+		txtStartDate.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
+				try {
+					format.parse(txtStartDate.getText());
+				}
+				catch (Exception E) {
+					labelFindPurchases.setText(txtStartDate.getToolTipText());
+				}
+			}
+		});
+		txtStartDate.setText("Date");
+		
+		Button btnFindPurchases = new Button(grpFindPurchases, SWT.NONE);
+		
+		btnFindPurchases.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
+				try {
+					Date date = format.parse(txtStartDate.getText());
+					List<String> purchases = sql.getPurchases(date);
+					
+					if (purchases.size() == 0 || purchases == null)
+					{
+						labelFindPurchases.setText("No purchases found.");
+					}
+					else 
+					{
+						String allPurchases = "";
+						for (int i = 0; i < purchases.size(); i++)
+						{
+							allPurchases += purchases.get(i) + "\n";
+						}
+						
+						labelFindPurchases.setText(allPurchases);
+					}
+					
+				}
+				catch (Exception E) {
+					E.printStackTrace();
+				}
+				
+
+			}
+		});
+		btnFindPurchases.setText("Find Purchases");
+		
+	}
+	
+	private void createFindTotalAmount() {
+		grpGiftCardPromotion.setLayout(new FillLayout(SWT.VERTICAL));
+		
+		Group grpFindTotalAmount = new Group(grpGiftCardPromotion, SWT.NONE);
+		grpFindTotalAmount.setLayout(new FillLayout(SWT.VERTICAL));
+		grpFindTotalAmount.setText("Find Total Amount Spent");
+		
+		Button btnCalculateAmount = new Button(grpFindTotalAmount, SWT.NONE);
+		labelGiftCardAmount = new Label(grpFindTotalAmount, SWT.NONE);
+		
+		btnCalculateAmount.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				float amount = sql.getTotalGiftCardPurchases();
+				labelGiftCardAmount.setText(String.valueOf(amount));
+
+			}
+		});
+		
+		btnCalculateAmount.setText("Calculate Amount");
+		
+		
+	}
+	
+	private void createRewardBonusPoints() {
+		
+		Group grpRewardBonusPoints = new Group(grpGiftCardPromotion, SWT.NONE);
+		grpRewardBonusPoints.setLayout(new FillLayout(SWT.VERTICAL));
+		grpRewardBonusPoints.setText("Reward Bonus Points");
+		
+
+		labelRewardPoints = new Label(grpRewardBonusPoints, SWT.NONE);
+		
+		txtNumberOfPoints = new Text(grpRewardBonusPoints, SWT.BORDER);
+		txtNumberOfPoints.setToolTipText("Number of points must be an integer.");
+		txtNumberOfPoints.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				try {
+					Integer.parseInt(txtNumberOfPoints.getText());
+				}
+				catch (Exception E) {
+					labelRewardPoints.setText(txtNumberOfPoints.getToolTipText());
+				}
+				
+			}
+		});
+		
+		txtNumberOfPoints.setText("Number of Points");
+		
+		Button btnRewardBonusPoints = new Button(grpRewardBonusPoints, SWT.NONE);
+		
+		btnRewardBonusPoints.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				try {
+					if(sql.rewardPointsPromotion(Integer.parseInt(txtNumberOfPoints.getText()))) {
+						labelRewardPoints.setText("Success!");
+					}
+					else {
+						labelRewardPoints.setText("Could not reward points.");
+					}
+				} 
+				catch (Exception E) {
+					// TODO Auto-generated catch block
+					E.printStackTrace();
+				}
+
+			}
+		});
+		btnRewardBonusPoints.setText("Reward Bonus Points");
+		
+		
+	}
+	
+	private void createIncreaseByCategory() {
+		grpIncreaseBookPrice.setLayout(new FillLayout(SWT.VERTICAL));
+		
 		Group grpByCategory = new Group(grpIncreaseBookPrice, SWT.NONE);
+		grpByCategory.setLayout(new FillLayout(SWT.VERTICAL));
 		grpByCategory.setText("By Category");
-		grpByCategory.setBounds(10, 20, 155, 186);
+		
+		labelCategoryPrice = new Label(grpByCategory, SWT.NONE);
+		
+		txtAmountToIncrease = new Text(grpByCategory, SWT.BORDER);
+		txtAmountToIncrease.setToolTipText("Amount to increase must be a decimal.");
+		txtAmountToIncrease.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				try {
+					Float.parseFloat(txtAmountToIncrease.getText());
+				}
+				catch (Exception E) {
+					labelCategoryPrice.setText(txtAmountToIncrease.getToolTipText());
+				}
+				
+			}
+		});
+		txtAmountToIncrease.setText("Amount to Increase");
+		
+		txtCategory = new Text(grpByCategory, SWT.BORDER);
+		txtCategory.setText("Category");
+		
+		Button btnIncreasePrice = new Button(grpByCategory, SWT.NONE);
+		
+		btnIncreasePrice.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				try {
+					if(sql.increasePublisherPrice(txtCategory.getText(), Float.parseFloat(txtAmountToIncrease.getText()))) {
+						labelCategoryPrice.setText("Success!");
+					}
+					else {
+						labelCategoryPrice.setText("Could not increase price.");
+					}
+				} 
+				catch (Exception E) {
+					// TODO Auto-generated catch block
+					E.printStackTrace();
+				}
+
+			}
+		});
+		
+		btnIncreasePrice.setText("Increase Price");
+		
+	}
+	
+	private void createIncreaseByPublisher() {
 		
 		Group grpByPublisher = new Group(grpIncreaseBookPrice, SWT.NONE);
+		grpByPublisher.setLayout(new FillLayout(SWT.VERTICAL));
 		grpByPublisher.setText("By Publisher");
-		grpByPublisher.setBounds(10, 212, 155, 207);
 		
-		Group grpFindPurchases = new Group(shell, SWT.NONE);
-		grpFindPurchases.setText("Find Purchases");
+		labelIncreasePub = new Label(grpByPublisher, SWT.NONE);
 		
-		Group grpEditCreditCard = new Group(shell, SWT.NONE);
+		txtAmountToIncreasePub = new Text(grpByPublisher, SWT.BORDER);
+		txtAmountToIncreasePub.setToolTipText("Amount to increase must be a decimal.");
+		txtAmountToIncreasePub.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				try {
+					Float.parseFloat(txtAmountToIncreasePub.getText());
+				}
+				catch (Exception E) {
+					labelIncreasePub.setText(txtAmountToIncreasePub.getToolTipText());
+				}
+				
+			}
+		});
+		txtAmountToIncreasePub.setText("Amount to Increase");
+		
+		txtPublisherIncrease = new Text(grpByPublisher, SWT.BORDER);
+		txtPublisherIncrease.setText("Publisher");
+		
+		Button btnIncreasePrice_1 = new Button(grpByPublisher, SWT.NONE);
+		
+		btnIncreasePrice_1.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				try {
+					if(sql.increasePublisherPrice(txtPublisherIncrease.getText(), Float.parseFloat(txtAmountToIncreasePub.getText()))) {
+						labelIncreasePub.setText("Success!");
+					}
+					else {
+						labelIncreasePub.setText("Could not increase price.");
+					}
+				} 
+				catch (Exception E) {
+					// TODO Auto-generated catch block
+					E.printStackTrace();
+				}
+
+			}
+		});
+		btnIncreasePrice_1.setText("Increase Price");
+		
+		
+	}
+	
+	private void createEditCreditCard() {
+		
+		Group grpEditCreditCard = new Group(shlBookstoreApplication, SWT.NONE);
 		grpEditCreditCard.setText("Edit Credit Card");
 		grpEditCreditCard.setLayout(new FillLayout(SWT.VERTICAL));
+
+		labelEditCardResult = new Label(grpEditCreditCard, SWT.NONE);
 		
 		txtUserEmail = new Text(grpEditCreditCard, SWT.BORDER);
 		txtUserEmail.setText("User Email");
 		
 		txtCardNumber = new Text(grpEditCreditCard, SWT.BORDER);
+		txtCardNumber.setToolTipText("Card number must be a 16 digit integer.");
 		txtCardNumber.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Integer.parseInt(txtCardNumber.getText());
 				}
 				catch (Exception E) {
-					txtCardNumber.setText("ERROR: Card number must be an integer");
+					labelEditCardResult.setText(txtCardNumber.getToolTipText());
 				}
 				
 			}
@@ -138,6 +396,7 @@ public class MainWindow {
 		txtCardNumber.setText("Card Number");
 		
 		txtExpiryDate = new Text(grpEditCreditCard, SWT.BORDER);
+		txtExpiryDate.setToolTipText("Date must be dd/MM/yyy");
 		txtExpiryDate.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
@@ -145,7 +404,7 @@ public class MainWindow {
 					format.parse(txtExpiryDate.getText());
 				}
 				catch (Exception E) {
-					txtExpiryDate.setText("ERROR: Date must be dd/MM/yyy");
+					labelEditCardResult.setText(txtExpiryDate.getToolTipText());
 				}
 			}
 		});
@@ -155,13 +414,14 @@ public class MainWindow {
 		txtCardName.setText("Name");
 		
 		txtCvv = new Text(grpEditCreditCard, SWT.BORDER);
+		txtCvv.setToolTipText("CVV must be an integer");
 		txtCvv.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Integer.parseInt(txtCvv.getText());
 				}
 				catch (Exception E) {
-					txtCvv.setText("ERROR: CVV must be an integer");
+					labelEditCardResult.setText(txtCvv.getToolTipText());
 				}
 				
 			}
@@ -172,7 +432,6 @@ public class MainWindow {
 		txtBillingAddress.setText("Billing Address");
 		
 		btnEditCard = new Button(grpEditCreditCard, SWT.NONE);
-		labelEditCardResult = new Label(grpEditCreditCard, SWT.NONE);
 		
 		btnEditCard.addMouseListener(new MouseAdapter() {
 			@Override
@@ -198,19 +457,25 @@ public class MainWindow {
 		});
 		btnEditCard.setText("Edit Card");
 		
+	}
+	
+	private void createAddBook() {
 		
-		Group grpAddBook = new Group(shell, SWT.NONE);
+		Group grpAddBook = new Group(shlBookstoreApplication, SWT.NONE);
 		grpAddBook.setText("Add Book");
 		grpAddBook.setLayout(new FillLayout(SWT.VERTICAL));
+
+		labelAddBookResult = new Label(grpAddBook, SWT.NONE);
 		
 		txtIsbn = new Text(grpAddBook, SWT.BORDER);
+		txtIsbn.setToolTipText("ISBN must be a 13 digit integer.");
 		txtIsbn.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Integer.parseInt(txtIsbn.getText());
 				}
 				catch (Exception E) {
-					txtIsbn.setText("ERROR: ISBN must be an integer");
+					labelAddBookResult.setText(txtIsbn.getToolTipText());
 				}
 				
 			}
@@ -228,6 +493,7 @@ public class MainWindow {
 		txtPublisher.setText("Publisher");
 		
 		txtPublicationDate = new Text(grpAddBook, SWT.BORDER);
+		txtPublicationDate.setToolTipText("Date must be dd/MM/yyy.");
 		txtPublicationDate.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
@@ -235,7 +501,7 @@ public class MainWindow {
 					format.parse(txtPublicationDate.getText());
 				}
 				catch (Exception E) {
-					txtPublicationDate.setText("ERROR: Date must be dd/MM/yyy");
+					labelAddBookResult.setText(txtPublicationDate.getToolTipText());
 				}
 			}
 		});
@@ -248,13 +514,14 @@ public class MainWindow {
 		txtEdition.setText("Edition");
 		
 		txtCopies = new Text(grpAddBook, SWT.BORDER);
+		txtCopies.setToolTipText("Copies must be an integer.");
 		txtCopies.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Integer.parseInt(txtCopies.getText());
 				}
 				catch (Exception E) {
-					txtCopies.setText("ERROR: Copies must be an integer");
+					labelAddBookResult.setText(txtCopies.getToolTipText());
 				}
 				
 			}
@@ -262,13 +529,14 @@ public class MainWindow {
 		txtCopies.setText("Copies");
 		
 		txtPrice = new Text(grpAddBook, SWT.BORDER);
+		txtPrice.setToolTipText("Price must be a decimal.");
 		txtPrice.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Float.parseFloat(txtPrice.getText());
 				}
 				catch (Exception E) {
-					txtPrice.setText("ERROR: Price must be a decimal number");
+					labelAddBookResult.setText(txtPrice.getToolTipText());
 				}
 				
 			}
@@ -279,13 +547,14 @@ public class MainWindow {
 		txtLanguage.setText("Language");
 		
 		txtCategories = new Text(grpAddBook, SWT.BORDER);
+		txtCategories.setToolTipText("Category must be an integer.");
 		txtCategories.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
 				try {
 					Integer.parseInt(txtCategories.getText());
 				}
 				catch (Exception E) {
-					txtCategories.setText("ERROR: Category must be an integer");
+					labelAddBookResult.setText(txtCategories.getToolTipText());
 				}
 				
 			}
@@ -293,7 +562,6 @@ public class MainWindow {
 		txtCategories.setText("Category");
 		
 		Button btnAddBook = new Button(grpAddBook, SWT.NONE);
-		labelAddBookResult = new Label(grpAddBook, SWT.NONE);
 		
 		btnAddBook.addMouseListener(new MouseAdapter() {
 			@Override
@@ -320,7 +588,6 @@ public class MainWindow {
 			}
 		});
 		btnAddBook.setText("Add Book");
-
-
+		
 	}
 }
