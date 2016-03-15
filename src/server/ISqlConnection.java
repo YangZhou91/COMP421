@@ -120,7 +120,7 @@ public class ISqlConnection {
     }
  
     public float getTotalGiftCardPurchases() throws SQLException {
-        String str = "SELECT SUM(total) FROM purchase WHERE pid IN (SELECT pid FROM payment_method WHERE giftcard_id IS NOT NULL)";
+        String str = "SELECT SUM(total) FROM purchase WHERE payment_method_id IN (SELECT pid FROM payment_method WHERE giftcard_id IS NOT NULL)";
         stmt.executeUpdate(str);
         
         return (float) 0.0;
