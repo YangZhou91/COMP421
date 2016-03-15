@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class Book {
 	
-	private int isbn13;
+	private String isbn13;
 	private String name;
 	private String authors;
 	private String publisher;
@@ -17,7 +17,7 @@ public class Book {
 	private String language;
 	private int categories;
 	
-	public Book(int isbn, String name, String authors, String publisher, Date publicationDate, String description, String edition, int copies, float price, String language, int categories)
+	public Book(String isbn, String name, String authors, String publisher, Date publicationDate, String description, String edition, int copies, float price, String language, int categories)
 	{
 		this.isbn13 = isbn;
 		this.name = name;
@@ -32,12 +32,12 @@ public class Book {
 		this.categories = categories;
 	}
 	
-	public void setIsbn13(int isbn)
+	public void setIsbn13(String isbn)
 	{
 		this.isbn13 = isbn;
 	}
 	
-	public int getIsbn13()
+	public String getIsbn13()
 	{
 		return isbn13;
 	}
