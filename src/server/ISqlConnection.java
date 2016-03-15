@@ -28,6 +28,11 @@ public class ISqlConnection {
         //sql.rewardPointsPromotion(java.sql.Date.valueOf("2015-10-12"), 51);
         */
         
+        /*
+         * Method test
+        //sq.increasePublisherPrice("Random House", 8);
+        */
+        
         } catch (Exception e) {
             e.printStackTrace();
         }
