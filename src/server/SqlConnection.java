@@ -5,46 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.sql.*;
 
-public class ISqlConnection {
-    
-    public static void main (String[] args) {
-        try {
-        ISqlConnection sql = new ISqlConnection();
-        
-        /*
-         * Method test
-        //CreditCard c1 = new CreditCard("1234567812345678", java.sql.Date.valueOf("2016-10-01"), "J. Fresh", 416, "5 Oak Creek Dr. Ajax, Ontario, Canada, F4M2K9");
-        //sql.editCreditCard("abraham.smith@gmail.com", c1);
-        *
-        */
-
-        /*
-         * Method test
-        //sql.increaseCategoryPrice(2,4);
-        */
-
-        /*
-         * Method test
-        //sql.rewardPointsPromotion(java.sql.Date.valueOf("2015-10-12"), 51);
-        */
-        
-        /*
-         * Method test
-        //sq.increasePublisherPrice("Random House", 8);
-        */
-        
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-
-        
-        
-    }
+public class SqlConnection {
     
     private Statement stmt;
     
-    public ISqlConnection() throws SQLException {
+    public SqlConnection() throws SQLException {
         
         try {
             DriverManager.registerDriver(new org.postgresql.Driver());
@@ -83,7 +48,7 @@ public class ISqlConnection {
         }
 
         String str2 = "UPDATE credit_card SET card_number = " + card.getNumber() + ", expiry_date = '" + card.getExpiry() + "', name = '" + card.getName() +
-            "', cvv = " + card.getCvv() + ", billing_address = '" + card.getBilling() + "' WHERE cid = " + rs.getInt(1);
+            "', cvv = " + card.getCvv() + ", billing_address = '" + card.getBilling() + "' WHERE cid = " + card.getCid();
         stmt.executeUpdate(str2);
         
         return true;

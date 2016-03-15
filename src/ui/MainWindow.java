@@ -1,5 +1,6 @@
 package ui;
 
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -18,7 +19,7 @@ import org.eclipse.swt.widgets.Text;
 
 import server.Book;
 import server.CreditCard;
-import server.ISqlConnection;
+import server.SqlConnection;
 
 import org.eclipse.swt.widgets.DateTime;
 import org.eclipse.swt.widgets.Spinner;
@@ -34,8 +35,8 @@ import org.eclipse.swt.layout.FormAttachment;
 
 public class MainWindow {
 	
-	// CHANGE
-	private ISqlConnection sql;
+
+	private SqlConnection sql;
 	
 	protected Shell shlBookstoreApplication;
 	private Text txtIsbn;
@@ -71,6 +72,7 @@ public class MainWindow {
 	private Label labelRewardPoints;
 	private Label labelGiftCardAmount;
 	private Label labelFindPurchases;
+	private Text txtDate;
 
 	/**
 	 * Launch the application.
@@ -90,7 +92,11 @@ public class MainWindow {
 	 */
 	public void open() {
 		
-		// Instantiate ISqlConnection
+		try {
+			sql = new SqlConnection();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
 		Display display = Display.getDefault();
 		createContents();
@@ -140,7 +146,9 @@ public class MainWindow {
 		
 
 		labelFindPurchases = new Label(grpFindPurchases, SWT.NONE);
+		
 		txtStartDate = new Text(grpFindPurchases, SWT.BORDER);
+		txtStartDate.setText("Date");
 		txtStartDate.setToolTipText("Date must be dd/MM/yyy");
 		txtStartDate.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -153,7 +161,6 @@ public class MainWindow {
 				}
 			}
 		});
-		txtStartDate.setText("Date");
 		
 		Button btnFindPurchases = new Button(grpFindPurchases, SWT.NONE);
 		
@@ -163,7 +170,7 @@ public class MainWindow {
 				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 				try {
 					Date date = format.parse(txtStartDate.getText());
-					List<String> purchases = sql.getPurchases(date);
+					List<String> purchases = sql.getPurchases(new java.sql.Date(date.getTime()));
 					
 					if (purchases.size() == 0 || purchases == null)
 					{
@@ -200,18 +207,23 @@ public class MainWindow {
 		grpFindTotalAmount.setText("Find Total Amount Spent");
 		
 		Button btnCalculateAmount = new Button(grpFindTotalAmount, SWT.NONE);
+		btnCalculateAmount.setText("Calculate Amount");
+		
 		labelGiftCardAmount = new Label(grpFindTotalAmount, SWT.NONE);
 		
 		btnCalculateAmount.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseDown(MouseEvent e) {
-				float amount = sql.getTotalGiftCardPurchases();
-				labelGiftCardAmount.setText(String.valueOf(amount));
+				float amount;
+				try {
+					amount = sql.getTotalGiftCardPurchases();
+					labelGiftCardAmount.setText(String.valueOf(amount));
+				} catch (SQLException E) {
+					labelGiftCardAmount.setText("Could not get total amount.");
+				}
 
 			}
 		});
-		
-		btnCalculateAmount.setText("Calculate Amount");
 		
 		
 	}
@@ -226,6 +238,7 @@ public class MainWindow {
 		labelRewardPoints = new Label(grpRewardBonusPoints, SWT.NONE);
 		
 		txtNumberOfPoints = new Text(grpRewardBonusPoints, SWT.BORDER);
+		txtNumberOfPoints.setText("Number of Points");
 		txtNumberOfPoints.setToolTipText("Number of points must be an integer.");
 		txtNumberOfPoints.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -239,7 +252,21 @@ public class MainWindow {
 			}
 		});
 		
-		txtNumberOfPoints.setText("Number of Points");
+		
+		txtDate = new Text(grpRewardBonusPoints, SWT.BORDER);
+		txtDate.setText("Date");
+		txtDate.setToolTipText("Date must be dd/MM/yyy");
+		txtDate.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
+				try {
+					format.parse(txtDate.getText());
+				}
+				catch (Exception E) {
+					labelRewardPoints.setText(txtDate.getToolTipText());
+				}
+			}
+		});
 		
 		Button btnRewardBonusPoints = new Button(grpRewardBonusPoints, SWT.NONE);
 		
@@ -247,7 +274,10 @@ public class MainWindow {
 			@Override
 			public void mouseDown(MouseEvent e) {
 				try {
-					if(sql.rewardPointsPromotion(Integer.parseInt(txtNumberOfPoints.getText()))) {
+					DateFormat format = new SimpleDateFormat("dd/MM/yyy");
+					java.sql.Date date = new java.sql.Date(format.parse(txtDate.getText()).getTime());
+					
+					if(sql.rewardPointsPromotion(date, Integer.parseInt(txtNumberOfPoints.getText()))) {
 						labelRewardPoints.setText("Success!");
 					}
 					else {
@@ -255,8 +285,7 @@ public class MainWindow {
 					}
 				} 
 				catch (Exception E) {
-					// TODO Auto-generated catch block
-					E.printStackTrace();
+					labelRewardPoints.setText("Could not reward points.");
 				}
 
 			}
@@ -276,6 +305,7 @@ public class MainWindow {
 		labelCategoryPrice = new Label(grpByCategory, SWT.NONE);
 		
 		txtAmountToIncrease = new Text(grpByCategory, SWT.BORDER);
+		txtAmountToIncrease.setText("Amount to Increase");
 		txtAmountToIncrease.setToolTipText("Amount to increase must be a decimal.");
 		txtAmountToIncrease.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -288,7 +318,6 @@ public class MainWindow {
 				
 			}
 		});
-		txtAmountToIncrease.setText("Amount to Increase");
 		
 		txtCategory = new Text(grpByCategory, SWT.BORDER);
 		txtCategory.setText("Category");
@@ -307,8 +336,7 @@ public class MainWindow {
 					}
 				} 
 				catch (Exception E) {
-					// TODO Auto-generated catch block
-					E.printStackTrace();
+					labelCategoryPrice.setText("Could not increase price.");
 				}
 
 			}
@@ -327,6 +355,7 @@ public class MainWindow {
 		labelIncreasePub = new Label(grpByPublisher, SWT.NONE);
 		
 		txtAmountToIncreasePub = new Text(grpByPublisher, SWT.BORDER);
+		txtAmountToIncreasePub.setText("Amount to Increase");
 		txtAmountToIncreasePub.setToolTipText("Amount to increase must be a decimal.");
 		txtAmountToIncreasePub.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -339,7 +368,6 @@ public class MainWindow {
 				
 			}
 		});
-		txtAmountToIncreasePub.setText("Amount to Increase");
 		
 		txtPublisherIncrease = new Text(grpByPublisher, SWT.BORDER);
 		txtPublisherIncrease.setText("Publisher");
@@ -358,8 +386,7 @@ public class MainWindow {
 					}
 				} 
 				catch (Exception E) {
-					// TODO Auto-generated catch block
-					E.printStackTrace();
+					labelIncreasePub.setText("Could not increase price.");
 				}
 
 			}
@@ -381,21 +408,10 @@ public class MainWindow {
 		txtUserEmail.setText("User Email");
 		
 		txtCardNumber = new Text(grpEditCreditCard, SWT.BORDER);
-		txtCardNumber.setToolTipText("Card number must be a 16 digit integer.");
-		txtCardNumber.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent arg0) {
-				try {
-					Integer.parseInt(txtCardNumber.getText());
-				}
-				catch (Exception E) {
-					labelEditCardResult.setText(txtCardNumber.getToolTipText());
-				}
-				
-			}
-		});
 		txtCardNumber.setText("Card Number");
 		
 		txtExpiryDate = new Text(grpEditCreditCard, SWT.BORDER);
+		txtExpiryDate.setText("Expiry Date");
 		txtExpiryDate.setToolTipText("Date must be dd/MM/yyy");
 		txtExpiryDate.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -408,12 +424,12 @@ public class MainWindow {
 				}
 			}
 		});
-		txtExpiryDate.setText("Expiry Date");
 		
 		txtCardName = new Text(grpEditCreditCard, SWT.BORDER);
 		txtCardName.setText("Name");
 		
 		txtCvv = new Text(grpEditCreditCard, SWT.BORDER);
+		txtCvv.setText("CVV");
 		txtCvv.setToolTipText("CVV must be an integer");
 		txtCvv.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -426,7 +442,6 @@ public class MainWindow {
 				
 			}
 		});
-		txtCvv.setText("CVV");
 		
 		txtBillingAddress = new Text(grpEditCreditCard, SWT.BORDER);
 		txtBillingAddress.setText("Billing Address");
@@ -440,7 +455,7 @@ public class MainWindow {
 					DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 					Date date = format.parse(txtExpiryDate.getText());
 					
-					CreditCard card = new CreditCard(Integer.parseInt(txtCardNumber.getText()), date, txtCardName.getText(), Integer.parseInt(txtCvv.getText()), txtBillingAddress.getText());
+					CreditCard card = new CreditCard(txtCardNumber.getText(), date, txtCardName.getText(), Integer.parseInt(txtCvv.getText()), txtBillingAddress.getText());
 					if(sql.editCreditCard(txtUserEmail.getText(), card)) {
 						labelEditCardResult.setText("Success!");
 					}
@@ -448,9 +463,8 @@ public class MainWindow {
 						labelEditCardResult.setText("Could not edit card.");
 					}
 				} 
-				catch (ParseException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				catch (Exception E) {
+					labelEditCardResult.setText("Could not edit card.");
 				}
 
 			}
@@ -468,19 +482,6 @@ public class MainWindow {
 		labelAddBookResult = new Label(grpAddBook, SWT.NONE);
 		
 		txtIsbn = new Text(grpAddBook, SWT.BORDER);
-		txtIsbn.setToolTipText("ISBN must be a 13 digit integer.");
-		txtIsbn.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent arg0) {
-				try {
-					Integer.parseInt(txtIsbn.getText());
-				}
-				catch (Exception E) {
-					labelAddBookResult.setText(txtIsbn.getToolTipText());
-				}
-				
-			}
-		});
-
 		txtIsbn.setText("ISBN-13");
 		
 		txtName = new Text(grpAddBook, SWT.BORDER);
@@ -493,6 +494,7 @@ public class MainWindow {
 		txtPublisher.setText("Publisher");
 		
 		txtPublicationDate = new Text(grpAddBook, SWT.BORDER);
+		txtPublicationDate.setText("Publication Date");
 		txtPublicationDate.setToolTipText("Date must be dd/MM/yyy.");
 		txtPublicationDate.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -505,7 +507,6 @@ public class MainWindow {
 				}
 			}
 		});
-		txtPublicationDate.setText("Publication Date");
 		
 		txtDescription = new Text(grpAddBook, SWT.BORDER);
 		txtDescription.setText("Description");
@@ -514,6 +515,7 @@ public class MainWindow {
 		txtEdition.setText("Edition");
 		
 		txtCopies = new Text(grpAddBook, SWT.BORDER);
+		txtCopies.setText("Copies");
 		txtCopies.setToolTipText("Copies must be an integer.");
 		txtCopies.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -526,9 +528,9 @@ public class MainWindow {
 				
 			}
 		});
-		txtCopies.setText("Copies");
 		
 		txtPrice = new Text(grpAddBook, SWT.BORDER);
+		txtPrice.setText("Price");
 		txtPrice.setToolTipText("Price must be a decimal.");
 		txtPrice.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -541,12 +543,12 @@ public class MainWindow {
 				
 			}
 		});
-		txtPrice.setText("Price");
 		
 		txtLanguage = new Text(grpAddBook, SWT.BORDER);
 		txtLanguage.setText("Language");
 		
 		txtCategories = new Text(grpAddBook, SWT.BORDER);
+		txtCategories.setText("Category");
 		txtCategories.setToolTipText("Category must be an integer.");
 		txtCategories.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent arg0) {
@@ -559,7 +561,6 @@ public class MainWindow {
 				
 			}
 		});
-		txtCategories.setText("Category");
 		
 		Button btnAddBook = new Button(grpAddBook, SWT.NONE);
 		
@@ -570,7 +571,7 @@ public class MainWindow {
 					DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 					Date date = format.parse(txtPublicationDate.getText());
 					
-					Book book = new Book(Integer.parseInt(txtIsbn.getText()), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), txtEdition.getText(), Integer.parseInt(txtIsbn.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
+					Book book = new Book(txtIsbn.getText(), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), txtEdition.getText(), Integer.parseInt(txtIsbn.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
 					
 					if(sql.addBook(book)) {
 						labelAddBookResult.setText("Success!");
@@ -580,9 +581,8 @@ public class MainWindow {
 					}
 					
 				} 
-				catch (ParseException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+				catch (Exception E) {
+					labelAddBookResult.setText("Could not add book.");
 				}
 
 			}

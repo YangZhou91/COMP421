@@ -6,13 +6,13 @@ import java.util.Date;
 public class CreditCard {
 	
 	private final int cid = 1;
-	private int number;
+	private String number;
 	private Date expiry;
 	private String name;
 	private int cvv;
 	private String billing;
 	
-	public CreditCard(int number, Date expiry, String name, int cvv, String billing)
+	public CreditCard(String number, Date expiry, String name, int cvv, String billing)
 	{
 		this.number = number;
 		this.expiry = expiry;
@@ -21,12 +21,17 @@ public class CreditCard {
 		this.billing = billing;
 	}
 	
-	public void setNumber(int number)
+	public int getCid() 
+	{
+		return cid;
+	}
+	
+	public void setNumber(String number)
 	{
 		this.number = number;
 	}
 	
-	public int getNumber()
+	public String getNumber()
 	{
 		return number;
 	}
