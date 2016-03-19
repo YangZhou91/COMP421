@@ -90,10 +90,13 @@ public class SqlConnection {
     }
  
     public float getTotalGiftCardPurchases() throws SQLException {
-        String str = "SELECT SUM(total) FROM purchase WHERE payment_method_id IN (SELECT pid FROM payment_method WHERE giftcard_id IS NOT NULL)";
-        stmt.executeUpdate(str);
-        
-        return (float) 0.0;
+        String str = "SELECT SUM(total) FROM purchase WHERE pid IN (SELECT pid FROM payment_method WHERE giftcard_id IS NOT NULL)";
+        ResultSet rs = stmt.executeQuery(str);
+        if (!rs.next()) {
+            return (float) 0.0;
+        } else {
+            return rs.getFloat(1);
+        }
     }
  
     public boolean rewardPointsPromotion(Date date, int amount) throws SQLException {
