@@ -572,18 +572,17 @@ public class MainWindow {
 					DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 					Date date = format.parse(txtPublicationDate.getText());
 					
-					Book book = new Book(txtIsbn.getText(), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), txtEdition.getText(), Integer.parseInt(txtIsbn.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
-					
-					if(sql.addBook(book)) {
+					Book book = new Book(txtIsbn.getText(), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), Integer.parseInt(txtEdition.getText()), Integer.parseInt(txtCopies.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
+					boolean result = sql.addBook(book);
+					if(result) {
 						labelAddBookResult.setText("Success!");
 					}
-					else {
-						labelAddBookResult.setText("Could not add book.");
-					}
+
 					
 				} 
 				catch (Exception E) {
 					labelAddBookResult.setText("Could not add book.");
+					E.printStackTrace();
 				}
 
 			}
