@@ -189,7 +189,7 @@ public class MainWindow {
 					
 				}
 				catch (Exception E) {
-					E.printStackTrace();
+					labelFindPurchases.setText("Error.");
 				}
 				
 
@@ -218,6 +218,7 @@ public class MainWindow {
 				try {
 					amount = sql.getTotalGiftCardPurchases();
 					labelGiftCardAmount.setText(String.valueOf(amount));
+					int x = 0; //debugging
 				} catch (SQLException E) {
 					labelGiftCardAmount.setText("Could not get total amount.");
 				}
