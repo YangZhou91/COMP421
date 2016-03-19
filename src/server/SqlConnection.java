@@ -66,9 +66,9 @@ public class SqlConnection {
         ArrayList<String> output = new ArrayList<String>(100);
         
         while (bool) {
-            output.add(String.valueOf(rs.getInt("pid")));
-            output.add(rs.getString("shipping_method"));
-            output.add(String.valueOf(rs.getFloat("total")));
+            output.add("pid: " + String.valueOf(rs.getInt("pid")));
+            output.add("shipping method: " + rs.getString("shipping_method"));
+            output.add("total: " + String.valueOf(rs.getFloat("total")));
             bool = rs.next();
         }
             
