@@ -108,6 +108,12 @@ public class SqlConnection {
         
         return true;
     }
+    
+    public void updatePurchases (int pid) throws SQLException {
+        String str = "UPDATE purchase SET shipping_method = 'Expedited' WHERE pid = " + String.valueOf(pid);
+        stmt.executeUpdate(str);
+        
+    }
  
     public void close() {
     }
