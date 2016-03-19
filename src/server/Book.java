@@ -11,13 +11,13 @@ public class Book {
 	private String publisher;
 	private Date publicationDate;
 	private String description;
-	private String edition;
+	private int edition;
 	private int copies;
 	private float price;
 	private String language;
 	private int categories;
 	
-	public Book(String isbn, String name, String authors, String publisher, Date publicationDate, String description, String edition, int copies, float price, String language, int categories)
+	public Book(String isbn, String name, String authors, String publisher, Date publicationDate, String description, int edition, int copies, float price, String language, int categories)
 	{
 		this.isbn13 = isbn;
 		this.name = name;
@@ -92,12 +92,12 @@ public class Book {
 		return description;
 	}
 	
-	public void setEdition(String edition)
+	public void setEdition(int edition)
 	{
 		this.edition = edition;
 	}
 	
-	public String getEdition()
+	public int getEdition()
 	{
 		return edition;
 	}

@@ -73,6 +73,8 @@ public class MainWindow {
 	private Label labelGiftCardAmount;
 	private Label labelFindPurchases;
 	private Text txtDate;
+	private Text txtUpdate;
+	private Label labelUpgradeShipping;
 
 	/**
 	 * Launch the application.
@@ -140,7 +142,7 @@ public class MainWindow {
 	
 	private void createFindPurchases() {
 		
-		Group grpFindPurchases = new Group(shlBookstoreApplication, SWT.NONE);
+		final Group grpFindPurchases = new Group(shlBookstoreApplication, SWT.NONE);
 		grpFindPurchases.setText("Find Purchases");
 		grpFindPurchases.setLayout(new FillLayout(SWT.VERTICAL));
 		
@@ -163,39 +165,75 @@ public class MainWindow {
 		});
 		
 		Button btnFindPurchases = new Button(grpFindPurchases, SWT.NONE);
-		
 		btnFindPurchases.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseDown(MouseEvent e) {
 				DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 				try {
 					Date date = format.parse(txtStartDate.getText());
-					List<String> purchases = sql.getPurchases(new java.sql.Date(date.getTime()));
+					List<String> tempPurchases = sql.getPurchases(new java.sql.Date(date.getTime()));
 					
-					if (purchases.size() == 0 || purchases == null)
+					if (tempPurchases.size() == 0 || tempPurchases == null)
 					{
 						labelFindPurchases.setText("No purchases found.");
 					}
 					else 
 					{
 						String allPurchases = "";
-						for (int i = 0; i < purchases.size(); i++)
+						for (int i = 0; i < tempPurchases.size(); i++)
 						{
-							allPurchases += purchases.get(i) + "\n";
+							allPurchases +=  tempPurchases.get(i) + "\n";
 						}
 						
 						labelFindPurchases.setText(allPurchases);
 					}
-					
 				}
 				catch (Exception E) {
-					E.printStackTrace();
+					labelFindPurchases.setText("Error.");
 				}
 				
 
 			}
 		});
 		btnFindPurchases.setText("Find Purchases");
+		
+		labelUpgradeShipping = new Label(grpFindPurchases, SWT.NONE);
+		
+		txtUpdate = new Text(grpFindPurchases, SWT.BORDER);
+		txtUpdate.setText("Select Purchase");
+		txtUpdate.setToolTipText("Must be a pid.");
+		txtUpdate.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent arg0) {
+				try {
+					Integer.parseInt(txtUpdate.getText());
+				}
+				catch (Exception E) {
+					labelUpgradeShipping.setText(txtUpdate.getToolTipText());
+				}
+				
+			}
+		});
+		
+		Button btnUpgradeShipping = new Button(grpFindPurchases, SWT.NONE);
+		
+		btnUpgradeShipping.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+				try {
+					sql.updatePurchases(Integer.parseInt(txtUpdate.getText()));
+
+					labelUpgradeShipping.setText("Success!");
+					
+				}
+				catch (Exception E) {
+					labelUpgradeShipping.setText("Could not upgrade shipping.");
+				}
+				
+
+			}
+		});
+		btnUpgradeShipping.setText("Upgrade Shipping");
+		
 		
 	}
 	
@@ -571,18 +609,16 @@ public class MainWindow {
 					DateFormat format = new SimpleDateFormat("dd/MM/yyy");
 					Date date = format.parse(txtPublicationDate.getText());
 					
-					Book book = new Book(txtIsbn.getText(), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), txtEdition.getText(), Integer.parseInt(txtIsbn.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
-					
-					if(sql.addBook(book)) {
+					Book book = new Book(txtIsbn.getText(), txtName.getText(), txtAuthors.getText(), txtPublisher.getText(), date, txtDescription.getText(), Integer.parseInt(txtEdition.getText()), Integer.parseInt(txtCopies.getText()), Float.parseFloat(txtPrice.getText()), txtLanguage.getText(), Integer.parseInt(txtCategories.getText()));
+					boolean result = sql.addBook(book);
+					if(result) {
 						labelAddBookResult.setText("Success!");
-					}
-					else {
-						labelAddBookResult.setText("Could not add book.");
 					}
 					
 				} 
 				catch (Exception E) {
 					labelAddBookResult.setText("Could not add book.");
+					E.printStackTrace();
 				}
 
 			}
